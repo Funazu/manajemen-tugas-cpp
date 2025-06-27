@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <queue>
 #include <string>
 using namespace std;
 
@@ -52,6 +51,21 @@ void showTasks() {
     }
 }
 
+// Cari tugas berdasarkan nama
+void searchTask(const string& keyword) {
+    Task* temp = head;
+    bool found = false;
+    cout << "\nHasil Pencarian Tugas:\n";
+    while (temp) {
+        if (temp->name.find(keyword) != string::npos) {
+            cout << "ID: " << temp->id << ", Nama: " << temp->name << ", Prioritas: " << temp->priority << endl;
+            found = true;
+        }
+        temp = temp->next;
+    }
+    if (!found) cout << "Tidak ditemukan tugas dengan kata kunci tersebut.\n";
+}
+
 // Hapus tugas berdasarkan ID
 void deleteTask(int id) {
     Task *temp = head, *prev = nullptr;
@@ -66,7 +80,7 @@ void deleteTask(int id) {
     if (!prev) head = temp->next;
     else prev->next = temp->next;
     delete temp;
-    cout << "Tugas ID " << id << " dihapus.\n";
+    cout << "Tugas ID " << id << " dihapus (data di graph tetap ada).\n";
 }
 
 // Ambil prioritas dari ID tugas
@@ -79,28 +93,26 @@ int getPriority(int id) {
     return 1000;
 }
 
-// Topological Sort dengan mempertimbangkan dependency dan prioritas jika setara
+// Topological Sort menggunakan queue manual
 void showTaskOrder() {
     vector<int> indegree(taskCount, 0);
     for (auto& list : adjList)
         for (int v : list)
             indegree[v]++;
 
-    // Custom comparator untuk min-heap berdasarkan prioritas
-    auto cmp = [](int a, int b) {
-        return getPriority(a) > getPriority(b);
-    };
-    priority_queue<int, vector<int>, decltype(cmp)> pq(cmp);
+    int queue[100];
+    int front = 0, rear = 0;
 
-    for (int i = 0; i < taskCount; i++)
-        if (indegree[i] == 0)
-            pq.push(i);
+    for (int i = 0; i < taskCount; i++) {
+        if (indegree[i] == 0) {
+            queue[rear++] = i;
+        }
+    }
 
-    cout << "\nUrutan pengerjaan tugas:\n";
-    while (!pq.empty()) {
-        int u = pq.top(); pq.pop();
+    cout << "\nUrutan pengerjaan tugas (Topological Sort):\n";
+    while (front < rear) {
+        int u = queue[front++];
 
-        // Tampilkan nama tugas dari linked list
         Task* temp = head;
         while (temp && temp->id != u) temp = temp->next;
         if (temp)
@@ -108,8 +120,9 @@ void showTaskOrder() {
 
         for (int v : adjList[u]) {
             indegree[v]--;
-            if (indegree[v] == 0)
-                pq.push(v);
+            if (indegree[v] == 0) {
+                queue[rear++] = v;
+            }
         }
     }
 }
@@ -121,8 +134,9 @@ int main() {
         cout << "1. Tambah Tugas\n";
         cout << "2. Tambah Dependency\n";
         cout << "3. Lihat Semua Tugas\n";
-        cout << "4. Lihat Urutan Tugas\n";
+        cout << "4. Lihat Urutan Tugas (Topological Sort)\n";
         cout << "5. Hapus Tugas\n";
+        cout << "6. Cari Tugas\n";
         cout << "0. Keluar\n";
         cout << "Pilih menu: ";
         cin >> pilihan;
@@ -154,6 +168,12 @@ int main() {
             cout << "Masukkan ID tugas yang ingin dihapus: ";
             cin >> id;
             deleteTask(id);
+        }
+        else if (pilihan == 6) {
+            string keyword;
+            cout << "Masukkan kata kunci pencarian: ";
+            getline(cin, keyword);
+            searchTask(keyword);
         }
         else if (pilihan != 0) {
             cout << "Pilihan tidak valid!\n";
