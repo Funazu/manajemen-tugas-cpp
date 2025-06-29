@@ -1,41 +1,46 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cstdlib> 
 using namespace std;
 
 // Struct untuk menyimpan data tugas
 struct Task {
     int id;
     string name;
-    int priority;
     Task* next;
 };
 
-Task* head = nullptr;
+Task* head = NULL;
 vector<vector<int>> adjList; // Graph adjacency list
 int taskCount = 0;
+string taskNames[100]; 
 
 // Tambah tugas ke linked list dan graph
-void addTask(string name, int priority) {
-    Task* newTask = new Task{taskCount, name, priority, nullptr};
+void addTask(string name) {
+    Task* newTask = new Task;
+    newTask->id = taskCount;
+    newTask->name = name;
+    newTask->next = NULL;
 
-    if (!head) head = newTask;
+    if (head == NULL) head = newTask;
     else {
         Task* temp = head;
-        while (temp->next) temp = temp->next;
+        while (temp->next != NULL) temp = temp->next;
         temp->next = newTask;
     }
 
-    adjList.push_back({}); // tambahkan node di graph
+    taskNames[taskCount] = name;
+    adjList.push_back({});
     cout << "Tugas ditambahkan: ID=" << taskCount << ", Nama=" << name << endl;
     taskCount++;
 }
 
-// Tambahkan dependency antar tugas
-void addDependency(int fromID, int toID) {
+// Tambahkan urutan pengerjaan antar tugas
+void setUrutanPengerjaan(int fromID, int toID) {
     if (fromID < taskCount && toID < taskCount) {
         adjList[fromID].push_back(toID);
-        cout << "Dependency ditambahkan: " << fromID << " -> " << toID << endl;
+        cout << "Urutan ditambahkan: " << fromID << " -> " << toID << endl;
     } else {
         cout << "ID tidak valid!" << endl;
     }
@@ -45,8 +50,8 @@ void addDependency(int fromID, int toID) {
 void showTasks() {
     Task* temp = head;
     cout << "\nDaftar Tugas:\n";
-    while (temp) {
-        cout << "ID: " << temp->id << ", Nama: " << temp->name << ", Prioritas: " << temp->priority << endl;
+    while (temp != NULL) {
+        cout << "ID: " << temp->id << ", Nama: " << temp->name << endl;
         temp = temp->next;
     }
 }
@@ -56,9 +61,9 @@ void searchTask(const string& keyword) {
     Task* temp = head;
     bool found = false;
     cout << "\nHasil Pencarian Tugas:\n";
-    while (temp) {
+    while (temp != NULL) {
         if (temp->name.find(keyword) != string::npos) {
-            cout << "ID: " << temp->id << ", Nama: " << temp->name << ", Prioritas: " << temp->priority << endl;
+            cout << "ID: " << temp->id << ", Nama: " << temp->name << endl;
             found = true;
         }
         temp = temp->next;
@@ -68,32 +73,22 @@ void searchTask(const string& keyword) {
 
 // Hapus tugas berdasarkan ID
 void deleteTask(int id) {
-    Task *temp = head, *prev = nullptr;
-    while (temp && temp->id != id) {
+    Task *temp = head, *prev = NULL;
+    while (temp != NULL && temp->id != id) {
         prev = temp;
         temp = temp->next;
     }
-    if (!temp) {
+    if (temp == NULL) {
         cout << "Tugas tidak ditemukan!\n";
         return;
     }
-    if (!prev) head = temp->next;
+    if (prev == NULL) head = temp->next;
     else prev->next = temp->next;
     delete temp;
     cout << "Tugas ID " << id << " dihapus (data di graph tetap ada).\n";
 }
 
-// Ambil prioritas dari ID tugas
-int getPriority(int id) {
-    Task* temp = head;
-    while (temp) {
-        if (temp->id == id) return temp->priority;
-        temp = temp->next;
-    }
-    return 1000;
-}
-
-// Topological Sort menggunakan queue manual
+// Topological Sort menggunakan queue
 void showTaskOrder() {
     vector<int> indegree(taskCount, 0);
     for (auto& list : adjList)
@@ -112,11 +107,7 @@ void showTaskOrder() {
     cout << "\nUrutan pengerjaan tugas (Topological Sort):\n";
     while (front < rear) {
         int u = queue[front++];
-
-        Task* temp = head;
-        while (temp && temp->id != u) temp = temp->next;
-        if (temp)
-            cout << temp->name << " (ID: " << u << ", Prioritas: " << temp->priority << ")\n";
+        cout << taskNames[u] << " (ID: " << u << ")\n";
 
         for (int v : adjList[u]) {
             indegree[v]--;
@@ -130,9 +121,10 @@ void showTaskOrder() {
 int main() {
     int pilihan;
     do {
+        system("cls");
         cout << "\n=== Menu Manajemen Tugas ===\n";
         cout << "1. Tambah Tugas\n";
-        cout << "2. Tambah Dependency\n";
+        cout << "2. Atur Urutan Pengerjaan\n";
         cout << "3. Lihat Semua Tugas\n";
         cout << "4. Lihat Urutan Tugas (Topological Sort)\n";
         cout << "5. Hapus Tugas\n";
@@ -144,39 +136,41 @@ int main() {
 
         if (pilihan == 1) {
             string nama;
-            int prioritas;
             cout << "Masukkan nama tugas: ";
             getline(cin, nama);
-            cout << "Masukkan prioritas: ";
-            cin >> prioritas;
-            addTask(nama, prioritas);
+            addTask(nama);
         }
         else if (pilihan == 2) {
             int from, to;
-            cout << "Masukkan ID tugas sumber: "; cin >> from;
-            cout << "Masukkan ID tugas tujuan: "; cin >> to;
-            addDependency(from, to);
+            cout << "Masukkan ID tugas yang harus dikerjakan lebih dulu: "; cin >> from;
+            cout << "Masukkan ID tugas yang dikerjakan setelahnya: "; cin >> to;
+            setUrutanPengerjaan(from, to);
         }
         else if (pilihan == 3) {
             showTasks();
+            system("pause");
         }
         else if (pilihan == 4) {
             showTaskOrder();
+            system("pause");
         }
         else if (pilihan == 5) {
             int id;
             cout << "Masukkan ID tugas yang ingin dihapus: ";
             cin >> id;
             deleteTask(id);
+            system("pause");
         }
         else if (pilihan == 6) {
             string keyword;
             cout << "Masukkan kata kunci pencarian: ";
             getline(cin, keyword);
             searchTask(keyword);
+            system("pause");
         }
         else if (pilihan != 0) {
             cout << "Pilihan tidak valid!\n";
+            system("pause");
         }
     } while (pilihan != 0);
 
