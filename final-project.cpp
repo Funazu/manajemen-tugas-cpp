@@ -60,15 +60,21 @@ void showTasks() {
 void searchTask(const string& keyword) {
     Task* temp = head;
     bool found = false;
+
     cout << "\nHasil Pencarian Tugas:\n";
+
     while (temp != NULL) {
-        if (temp->name.find(keyword) != string::npos) {
+        if (temp->name == keyword) {
             cout << "ID: " << temp->id << ", Nama: " << temp->name << endl;
             found = true;
         }
+
         temp = temp->next;
     }
-    if (!found) cout << "Tidak ditemukan tugas dengan kata kunci tersebut.\n";
+
+    if (!found) {
+        cout << "Tidak ditemukan tugas dengan nama tersebut.\n";
+    }
 }
 
 // Hapus tugas berdasarkan ID
