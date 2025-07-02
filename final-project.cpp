@@ -96,14 +96,17 @@ void deleteTask(int id) {
 
 // Topological Sort menggunakan queue
 void showTaskOrder() {
+    // Menghitung jumlah ketergantungan tiap tugas
     vector<int> indegree(taskCount, 0);
     for (auto& list : adjList)
         for (int v : list)
             indegree[v]++;
 
+    // Membuat queue untuk menyimpan tugas yang bisa langsung dikerjakan
     int queue[100];
     int front = 0, rear = 0;
 
+    // Masukkan semua tugas yang tidak punya ketergantungan ke dalam queue
     for (int i = 0; i < taskCount; i++) {
         if (indegree[i] == 0) {
             queue[rear++] = i;
@@ -115,9 +118,13 @@ void showTaskOrder() {
         int u = queue[front++];
         cout << taskNames[u] << " (ID: " << u << ")\n";
 
+        // Mencari tugas yang bergantung pada u
         for (int v : adjList[u]) {
+            // Menghapus tugas yang bergantungan
             indegree[v]--;
+            // Kalau semua tugas sudah dihapus
             if (indegree[v] == 0) {
+                // Masukan ke queue
                 queue[rear++] = v;
             }
         }
